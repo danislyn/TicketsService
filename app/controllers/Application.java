@@ -1,0 +1,51 @@
+package controllers;
+
+import play.*;
+import play.mvc.*;
+
+import java.util.*;
+
+import dao.AccountDAO;
+import dao.RoleDAO;
+
+import models.*;
+
+public class Application extends Controller {
+
+    public static void index() {
+    	render("Application/index.html");
+    }
+    
+	public static void login(){
+		String username = params.get("account");
+		String password = params.get("password");
+		Account account = AccountDAO.login(username, password);
+		
+		if(account != null){
+			session.put("account", account.account);
+			session.put("account_id", account.id);
+			session.put("account_level", account.level);
+			redirect("/home");
+		}
+		else{
+			redirect("/");
+		}
+		
+	}
+    
+	public static void home(){
+		if(session.get("account") != null){
+			Long accountId = Long.valueOf(session.get("account_id"));
+			renderArgs.put("roles", RoleDAO.getRolesByAccountId(accountId));
+			
+			render("Application/home.html");
+		}
+		else{
+			redirect("/");
+		}
+	}
+	
+
+	
+
+}
