@@ -5,7 +5,8 @@
 # Home page
 GET     /                                       Application.index
 POST	/login									Application.login
-GET		/home									Application.home
+GET		/basic/home								Application.home
+GET		/admin/home								Application.homeAdmin
 
 # Ignore favicon requests
 GET     /favicon.ico                            404
@@ -14,4 +15,7 @@ GET     /favicon.ico                            404
 GET     /public/                                staticDir:public
 
 # Catch all
+*       /basic/{action}            				BasicController.{action}
+*       /admin/{action}            				AdminController.{action}
+
 *       /{controller}/{action}                  {controller}.{action}

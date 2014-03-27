@@ -16,6 +16,7 @@ public class Application extends Controller {
     	render("Application/index.html");
     }
     
+    
 	public static void login(){
 		String username = params.get("account");
 		String password = params.get("password");
@@ -25,27 +26,33 @@ public class Application extends Controller {
 			session.put("account", account.account);
 			session.put("account_id", account.id);
 			session.put("account_level", account.level);
-			redirect("/home");
+			
+			if(account.level == 0){
+				redirect("/basic/home");
+			}
+			else if(account.level == 2){
+				redirect("/admin/home");
+			}
 		}
-		else{
-			redirect("/");
-		}
-		
+		redirect("/");
 	}
     
+	
 	public static void home(){
 		if(session.get("account") != null){
 			Long accountId = Long.valueOf(session.get("account_id"));
 			renderArgs.put("roles", RoleDAO.getRolesByAccountId(accountId));
-			
 			render("Application/home.html");
 		}
-		else{
-			redirect("/");
-		}
+		redirect("/");
 	}
 	
-
 	
+	public static void homeAdmin(){
+		if(session.get("account") != null && (session.get("account_level")).equals("2")){
+			render("Application/home2.html");
+		}
+		redirect("/");
+	}
 
 }

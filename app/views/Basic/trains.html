@@ -1,0 +1,135 @@
+#{extends 'main.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+#trainsTable{
+    margin: 20px 0px;
+}
+</style>
+#{/set}
+
+
+
+<h2>火车票预定</h2>
+<div class="row-fluid">
+    <div class="span4">
+        <span>出发日期</span>
+        <div class="input-append date" id="leaveDate" data-date="" data-date-format="yyyy-mm-dd" data-link-field="leaveDateInput" data-link-format="yyyy-mm-dd">
+            <input size="16" type="text" value="${pDate}" />
+            <span class="add-on"><i class="icon-remove"></i></span>
+            <span class="add-on"><i class="icon-th"></i></span>
+        </div>
+        <input type="hidden" id="leaveDateInput" value="${pDate}" />
+    </div>
+
+    <div class="span3">
+        <span>发站</span>
+        <select id="startCitySelect">
+            <option value="-1">请选择</option>
+            %{ for(city in cities){ }%
+            <option value="${city.id}" %{if(city.id==pStartCity){}%selected="selected"%{}}%>${city.name}</option>
+            %{ } }%
+        </select>
+    </div>
+
+    <div class="span3">
+        <span>到站</span>
+        <select id="endCitySelect">
+            <option value="-1">请选择</option>
+            %{ for(city in cities){ }%
+            <option value="${city.id}" %{if(city.id==pEndCity){}%selected="selected"%{}}%>${city.name}</option>
+            %{ } }%
+        </select>
+    </div>
+
+    <div class="span1">
+        <a href="javascript:void(0);" class="btn btn-primary btn-small" id="queryLink">查询车票</a>
+    </div>
+</div>
+
+<table class="table table-striped table-bordered table-hover" id="trainsTable">
+    <thead>
+        <tr role="row">
+            <th>车次</th>
+            <th>发站</th>
+            <th>到站</th>
+            <th>发车时间</th>
+            <th>到站时间</th>
+            <th>票价</th>
+            <th>余票数</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(train in trains){ }%
+        <tr data-tid="${train.id}">
+            <td>${train.trainCode}</td>
+            <td>${train.startCity.name}</td>
+            <td>${train.endCity.name}</td>
+            <td>${train.startHH}:${train.startMM}</td>
+            <td>
+                %{if (train.endDay==1) {}%<span>次日</span>%{}}%
+                ${train.endHH}:${train.endMM}
+            </td>
+            <td><span>¥</span>${train.price}</td>
+            <td>${train.available}</td>
+            <td><a href="javascript:void(0);" class="buy-link">购买</a></td>
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+    
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#leaveDate').datetimepicker({
+        language:  'zh-CN',
+        weekStart: 0,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 2,
+        minView: 2,
+        forceParse: 0
+    });
+
+
+    $('#queryLink').click(function(){
+        var date = $('#leaveDateInput').val();
+        var startCity = $('#startCitySelect').val();
+        var endCity = $('#endCitySelect').val();
+        //refresh
+        window.location.href = '/basic/trainQuery?date=' + date + '&startCity=' + startCity + '&endCity=' + endCity;
+    });
+
+
+    $('.buy-link').click(function(){
+        var date = $('#leaveDateInput').val();
+        var trainId = $(this).closest('tr').attr('data-tid');
+        var updateTd = $(this).closest('td').prev();
+
+        $.post(
+            '/basic/trainBuy',
+            {
+                'date': date,
+                'trainId': trainId
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('购买成功');
+                    updateTd.text(Number(updateTd.text() - 1));
+                }
+                else{
+                    alert('购买失败');
+                }
+            }
+        );
+    });
+
+});
+</script>
+#{/set}

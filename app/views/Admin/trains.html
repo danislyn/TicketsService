@@ -1,0 +1,181 @@
+#{extends 'main2.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+#trainsTable{
+    margin-bottom: 20px;
+}
+#nextDayCheck{
+    margin-bottom: 4px;
+    margin-right: 4px;
+}
+</style>
+#{/set}
+
+
+
+<h2>火车票配置</h2>
+<table class="table table-striped table-bordered table-hover" id="trainsTable">
+    <thead>
+        <tr role="row">
+            <th>车次</th>
+            <th>发站</th>
+            <th>到站</th>
+            <th>发车时间</th>
+            <th>到站时间</th>
+            <th>载客容量</th>
+            <th>票价</th>
+            <!-- <th></th> -->
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(train in trains){ }%
+        <tr data-tid="${train.id}">
+            <td>${train.trainCode}</td>
+            <td>${train.startCity.name}</td>
+            <td>${train.endCity.name}</td>
+            <td>${train.startHH}:${train.startMM}</td>
+            <td>
+                %{if (train.endDay==1) {}%<span>次日</span>%{}}%
+                ${train.endHH}:${train.endMM}
+            </td>
+            <td>${train.capacity}</td>
+            <td><span>¥</span>${train.price}</td>
+            <!-- <td><a href="javascript:void(0);" class="revise-link">修改</a></td> -->
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+<a href="#addTrainModal" id="addTrainLink" data-toggle="modal">&plus;添加列车班次</a>
+
+
+
+<div class="modal hide fade" id="addTrainModal" role="dialog">
+    <div class="modal-header">
+        <a href="javascript:void(0);" class="close" role="button" data-dismiss="modal" aria-hidden="true">x</a>
+        <h3>添加列车班次</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">车次</label>
+                <div class="controls">
+                    <input type="text" id="trainCodeInput">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">发站</label>
+                <div class="controls">
+                    <select id="startCitySelect">
+                        <option value="-1">请选择</option>
+                        %{ for(city in cities){ }%
+                        <option value="${city.id}">${city.name}</option>
+                        %{ } }%
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">到站</label>
+                <div class="controls">
+                    <select id="endCitySelect">
+                        <option value="-1">请选择</option>
+                        %{ for(city in cities){ }%
+                        <option value="${city.id}">${city.name}</option>
+                        %{ } }%
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">发车时间</label>
+                <div class="controls">
+                    <input type="text" class="input-mini" id="startHHInput">
+                    <span>时</span>
+                    <input type="text" class="input-mini" id="startMMInput">
+                    <span>分</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">到站时间</label>
+                <div class="controls">
+                    <input type="text" class="input-mini" id="endHHInput">
+                    <span>时</span>
+                    <input type="text" class="input-mini" id="endMMInput">
+                    <span>分</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">&nbsp;</label>
+                <div class="controls">
+                    <label><input type="checkbox" id="nextDayCheck">次日到达</label>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">载客容量</label>
+                <div class="controls">
+                    <input type="text" id="capacityInput">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">票价</label>
+                <div class="controls">
+                    <div class="input-prepend">
+                        <span class="add-on">¥</span>
+                        <input type="text" class="input-mini" id="priceInput">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <input type="button" class="btn btn-primary" id="addTrainOk" value="确定添加" />
+        <input type="button" class="btn" data-dismiss="modal" aria-hidden="true" value="取消" />
+    </div>
+</div>
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#addTrainOk').click(function(){
+        var trainCode = $('#trainCodeInput').val();
+        var startCity = $('#startCitySelect').val();
+        var endCity = $('#endCitySelect').val();
+        var startHH = $('#startHHInput').val();
+        var startMM = $('#startMMInput').val();
+        var endHH = $('#endHHInput').val();
+        var endMM = $('#endMMInput').val();
+        var endDay = $('#nextDayCheck').get(0).checked ? 1 : 0;
+        var capacity = $('#capacityInput').val();
+        var price = $('#priceInput').val();
+
+        $.post(
+            '/admin/trainAdd',
+            {
+                'trainCode': trainCode,
+                'startCity': startCity,
+                'endCity': endCity,
+                'startHH': startHH,
+                'startMM': startMM,
+                'endHH': endHH,
+                'endMM': endMM,
+                'endDay': endDay,
+                'capacity': capacity,
+                'price': price
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('添加成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('添加失败');
+                }
+            }
+        );
+    });
+
+});
+</script>
+#{/set}

@@ -1,0 +1,219 @@
+#{extends 'main.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+
+</style>
+#{/set}
+
+
+
+<h2>火车票订单</h2>
+<table class="table table-striped table-bordered table-hover" id="trainsTable">
+    <thead>
+        <tr role="row">
+            <th>乘车日期</th>
+            <th>车次</th>
+            <th>车次信息</th>
+            <th>乘客信息</th>
+            <th>订单价格</th>
+            <th>成交时间</th>
+            <th>状态</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(order in trainOrders){ }%
+        <tr data-oid="${order.id}" data-startCity="${order.train.startCity.id}" data-endCity="${order.train.endCity.id}" data-tid="${order.train.id}" data-date="${order.leaveDate}">
+            <td>${order.leaveDate}</td>
+            <td>${order.train.trainCode}</td>
+            <td>
+                <div>
+                    ${order.train.startCity.name}
+                    <span>-</span>
+                    ${order.train.endCity.name}
+                </div>
+                <div>
+                    ${order.train.startHH}:${order.train.startMM}
+                    <span>-</span>
+                    %{if (order.train.endDay==1) {}%<span>次日</span>%{}}%
+                    ${order.train.endHH}:${order.train.endMM}
+                </div>
+            </td>
+            <td>
+                <div>姓名：${order.passenger.trueName}</div>
+                <div>身份证号：${order.passenger.idCard}</div>
+            </td>
+            <td>${order.totalPrice}</td>
+            <td>${order.createTime}</td>
+            <td>
+                %{if (order.status==0) {}%<span>正常</span>%{}}%
+                %{if (order.status==1) {}%<span>已改签</span>%{}}%
+                %{if (order.status==-1) {}%<span>已退票</span>%{}}%
+            </td>
+            <td>
+                %{if (order.status==0) {}%<a href="javascript:void(0);" class="change-link">改签</a>%{}}%
+                %{if (order.status!=-1) {}%<a href="javascript:void(0);" class="abort-link">退票</a>%{}}%
+            </td>
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+
+
+
+<div class="modal hide fade" id="changeTrainModal" role="dialog">
+    <div class="modal-header">
+        <a href="javascript:void(0);" class="close" role="button" data-dismiss="modal" aria-hidden="true">x</a>
+        <h3>改签</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">出发日期</label>
+                <div class="controls">
+                    <div class="input-append date" id="leaveDate" data-date="" data-date-format="yyyy-mm-dd" data-link-field="leaveDateInput" data-link-format="yyyy-mm-dd">
+                        <input size="16" type="text" value="" />
+                        <span class="add-on"><i class="icon-remove"></i></span>
+                        <span class="add-on"><i class="icon-th"></i></span>
+                    </div>
+                    <input type="hidden" id="leaveDateInput" value="" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">车次</label>
+                <div class="controls">
+                    <select id="trainSelect">
+                        <option value="-1">请选择</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="changeTrainOrderId">
+        </form>
+    </div>
+    <div class="modal-footer">
+        <input type="button" class="btn btn-primary" id="changeTrainOk" value="确定改签" />
+        <input type="button" class="btn" data-dismiss="modal" aria-hidden="true" value="取消" />
+    </div>
+</div>
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#leaveDate').datetimepicker({
+        language:  'zh-CN',
+        weekStart: 0,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 2,
+        minView: 2,
+        forceParse: 0
+    });
+
+
+    //改签初始化
+    $('#trainsTable').find('.change-link').click(function(){
+        var startCity = $(this).closest('tr').attr('data-startCity');
+        var endCity = $(this).closest('tr').attr('data-endCity');
+        var trainId = $(this).closest('tr').attr('data-tid');
+        var date = $(this).closest('tr').attr('data-date');
+        var orderId = $(this).closest('tr').attr('data-oid');
+
+        //记录要改签的orderId
+        $('#changeTrainOrderId').val(orderId);
+
+        //初始化leave date
+        $('#leaveDate').find('input').val(date);
+        $('#leaveDateInput').val(date);
+
+        //Ajax初始化可选车次
+        $.post(
+            '/basic/getChangeTrainList',
+            {
+                'startCityId': startCity,
+                'endCityId': endCity
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                var target = $('#trainSelect');
+                target.empty();
+
+                for(var i=0; i<result.length; i++){
+                    var text = result[i].trainCode + '  时间 ' + result[i].startHH + ':' + result[i].startMM + '-';
+                    if(Number(result[i].endDay) > 0){
+                        text += '次日';
+                    }
+                    text += result[i].endHH + ':' + result[i].endMM;
+
+                    var option = $('<option value="' + result[i].id + '">' + text + '</option>');
+                    if(result[i].id == trainId){
+                        option.attr('selected', 'selected');
+                    }
+
+                    target.append(option);
+                }
+            }
+        );
+
+        //对话框初始化完毕
+        $('#changeTrainModal').modal('show');
+    });
+
+
+    //改签
+    $('#changeTrainOk').click(function(){
+        var orderId = $('#changeTrainOrderId').val();
+        var newTrainId = $('#trainSelect').val();
+        var newDate = $('#leaveDateInput').val();
+
+        $.post(
+            '/basic/trainChangeOrder',
+            {
+                'orderId': orderId,
+                'newTrainId': newTrainId,
+                'newDate': newDate
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('改签成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('改签失败');
+                }
+            }
+        );
+    });
+
+
+    //退票
+    $('#trainsTable').find('.abort-link').click(function(){
+        if(confirm('确定要退票吗？')){
+            var orderId = $(this).closest('tr').attr('data-oid');
+
+            $.post(
+                '/basic/trainAbortOrder',
+                {
+                    'orderId': orderId
+                },
+                function(data){
+                    var result = eval('(' + data + ')');
+                    if(result.success == true){
+                        alert('退票成功');
+                        window.location.reload();
+                    }
+                    else{
+                        alert('退票失败');
+                    }
+                }
+            );
+        }
+    });
+
+});
+</script>
+#{/set}

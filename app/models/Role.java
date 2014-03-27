@@ -24,8 +24,7 @@ public class Role extends Model {
 	@Column(name="tel")
 	public String tel;
 	
-//	@ManyToOne
-//	@JoinColumn(name="account_id", referencedColumnName="id")
-//	public Account account;
+	@Column(name="account_id")
+	public Integer accountId;
 	
 }
