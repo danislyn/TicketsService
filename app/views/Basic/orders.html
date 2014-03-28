@@ -61,6 +61,43 @@
 
 
 
+<h2>酒店订单</h2>
+<table class="table table-striped table-bordered table-hover" id="hotelsTable">
+    <thead>
+        <tr role="row">
+            <th>入住日期</th>
+            <th>城市</th>
+            <th>酒店</th>
+            <th>房型信息</th>
+            <th>订单价格</th>
+            <th>成交时间</th>
+            <th>状态</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(order in hotelOrders){ }%
+        <tr data-oid="${order.id}">
+            <td>${order.checkinDate}</td>
+            <td>${order.hotelType.hotel.city.name}</td>
+            <td>${order.hotelType.hotel.name}</td>
+            <td>${order.hotelType.name}</td>
+            <td>${order.totalPrice}</td>
+            <td>${order.createTime}</td>
+            <td>
+                %{if (order.status==0) {}%<span>正常</span>%{}}%
+                %{if (order.status==-1) {}%<span>已退订</span>%{}}%
+            </td>
+            <td>
+                %{if (order.status==0) {}%<a href="javascript:void(0);" class="abort-link">退订</a>%{}}%
+            </td>
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+
+
+
 <div class="modal hide fade" id="changeTrainModal" role="dialog">
     <div class="modal-header">
         <a href="javascript:void(0);" class="close" role="button" data-dismiss="modal" aria-hidden="true">x</a>
@@ -102,6 +139,7 @@
 <script type="text/javascript">
 $(function(){
 
+    //==============================================================
     $('#leaveDate').datetimepicker({
         language:  'zh-CN',
         weekStart: 0,
@@ -213,6 +251,37 @@ $(function(){
             );
         }
     });
+
+
+    //==============================================================
+    //酒店退订
+    $('#hotelsTable').find('.abort-link').click(function(){
+        if(confirm('确定要退订吗？')){
+            var orderId = $(this).closest('tr').attr('data-oid');
+
+            $.post(
+                '/basic/hotelAbortOrder',
+                {
+                    'orderId': orderId
+                },
+                function(data){
+                    var result = eval('(' + data + ')');
+                    if(result.success == true){
+                        alert('退订成功');
+                        window.location.reload();
+                    }
+                    else{
+                        alert('退订失败');
+                    }
+                }
+            );
+        }
+    });
+
+
+    //==============================================================
+    //景点退票
+    
 
 });
 </script>

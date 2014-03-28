@@ -1,0 +1,197 @@
+#{extends 'main2.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+#hotelsTable{
+    margin-bottom: 20px;
+}
+</style>
+#{/set}
+
+
+
+<h2>酒店配置</h2>
+<table class="table table-striped table-bordered table-hover" id="hotelsTable">
+    <thead>
+        <tr role="row">
+            <th>酒店</th>
+            <th>城市</th>
+            <th>酒店简介</th>
+            <th>房型信息</th>
+            <!-- <th></th> -->
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(hotel in hotels){ }%
+        <tr data-hid="${hotel.id}">
+            <td>${hotel.name}</td>
+            <td>${hotel.city.name}</td>
+            <td>${hotel.info}</td>
+            <td>
+                %{ for(type in hotel.hotelTypes){ }%
+                <div data-htid="${type.id}">
+                    ${type.name}<span>&nbsp;&nbsp;(&nbsp;共${type.num}间&nbsp;)</span>
+                    <span>&nbsp;&nbsp;¥</span>${type.price}<span>/间</span>
+                </div>
+                %{ } }%
+                <a href="javascript:void(0);" class="add-hotel-type-link">&plus;添加房型</a>
+            </td>
+            <!-- <td><a href="javascript:void(0);" class="revise-link">修改</a></td> -->
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+<a href="#addHotelModal" id="addHotelLink" data-toggle="modal">&plus;添加酒店</a>
+
+
+
+<!-- 添加酒店对话框 -->
+<div class="modal hide fade" id="addHotelModal" role="dialog">
+    <div class="modal-header">
+        <a href="javascript:void(0);" class="close" role="button" data-dismiss="modal" aria-hidden="true">x</a>
+        <h3>添加酒店</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">酒店名称</label>
+                <div class="controls">
+                    <input type="text" id="hotelNameInput">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">所在城市</label>
+                <div class="controls">
+                    <select id="citySelect">
+                        <option value="-1">请选择</option>
+                        %{ for(city in cities){ }%
+                        <option value="${city.id}">${city.name}</option>
+                        %{ } }%
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">酒店简介</label>
+                <div class="controls">
+                    <textarea id="hotelInfoInput"></textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <input type="button" class="btn btn-primary" id="addHotelOk" value="确定添加" />
+        <input type="button" class="btn" data-dismiss="modal" aria-hidden="true" value="取消" />
+    </div>
+</div>
+
+
+
+<!-- 添加房型对话框 -->
+<div class="modal hide fade" id="addHotelTypeModal" role="dialog">
+    <div class="modal-header">
+        <a href="javascript:void(0);" class="close" role="button" data-dismiss="modal" aria-hidden="true">x</a>
+        <h3>添加房型</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">房型名称</label>
+                <div class="controls">
+                    <input type="text" id="hotelTypeNameInput">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">房间数量</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="text" class="input-mini" id="hotelTypeNumInput"></input>
+                        <span class="add-on">间</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">单价</label>
+                <div class="controls">
+                    <div class="input-prepend">
+                        <span class="add-on">¥</span>
+                        <input type="text" class="input-mini" id="hotelTypePriceInput">
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="currentHotelId">
+        </form>
+    </div>
+    <div class="modal-footer">
+        <input type="button" class="btn btn-primary" id="addHotelTypeOk" value="确定添加" />
+        <input type="button" class="btn" data-dismiss="modal" aria-hidden="true" value="取消" />
+    </div>
+</div>
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#addHotelOk').click(function(){
+        var name = $('#hotelNameInput').val();
+        var city = $('#citySelect').val();
+        var info = $('#hotelInfoInput').val();
+
+        $.post(
+            '/admin/hotelAdd',
+            {
+                'name': name,
+                'city': city,
+                'info': info
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('添加成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('添加失败');
+                }
+            }
+        );
+    });
+
+
+    $('.add-hotel-type-link').click(function(){
+        //初始化
+        $('#currentHotelId').val($(this).closest('tr').attr('data-hid'));
+        $('#addHotelTypeModal').modal('show');
+    });
+
+
+    $('#addHotelTypeOk').click(function(){
+        var hotelId = $('#currentHotelId').val();
+        var name = $('#hotelTypeNameInput').val();
+        var num = $('#hotelTypeNumInput').val();
+        var price = $('#hotelTypePriceInput').val();
+
+        $.post(
+            '/admin/hotelTypeAdd',
+            {
+                'hotelId': hotelId,
+                'name': name,
+                'num': num,
+                'price': price
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('添加成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('添加失败');
+                }
+            }
+        );
+    });
+
+});
+</script>
+#{/set}

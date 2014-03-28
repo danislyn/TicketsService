@@ -3,15 +3,19 @@ package controllers;
 import java.util.List;
 
 import dao.CityDAO;
+import dao.HotelDAO;
 import dao.TrainScheduleDAO;
 
 import models.City;
+import models.Hotel;
+import models.HotelType;
 import models.TrainSchedule;
 
 import play.mvc.Controller;
 
 public class AdminController extends Controller {
 
+	//============================================================
 	public static void trainQuery(){
 		List<TrainSchedule> trains = TrainScheduleDAO.findAll();
 		renderArgs.put("trains", trains);
@@ -50,6 +54,81 @@ public class AdminController extends Controller {
 			
 			train = train.save();
 			if(train.id != null){
+				result = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		response.contentType = "text/html;charset=UTF-8";
+    	if(result){
+    		renderJSON("{success:true}");
+    	}
+    	else{
+    		renderJSON("{success:false}");
+    	}
+	}
+	
+	
+	//============================================================
+	public static void hotelQuery(){
+		List<Hotel> hotels = HotelDAO.findAll();
+		renderArgs.put("hotels", hotels);
+		renderArgs.put("cities", CityDAO.findAll());
+		render("Admin/hotels.html");
+	}
+	
+	
+	//添加酒店，不含房型
+	public static void hotelAdd(){
+		String pName = params.get("name");
+		String pCity = params.get("city");
+		String pInfo = params.get("info");
+		
+		boolean result = false;
+		
+		try {
+			Hotel hotel = new Hotel();
+			hotel.name = pName;
+			hotel.city = City.findById(Long.valueOf(pCity));
+			hotel.info = pInfo;
+			
+			hotel = hotel.save();
+			if(hotel.id != null){
+				result = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		response.contentType = "text/html;charset=UTF-8";
+    	if(result){
+    		renderJSON("{success:true}");
+    	}
+    	else{
+    		renderJSON("{success:false}");
+    	}
+	}
+	
+	
+	//添加房型
+	public static void hotelTypeAdd(){
+		String pHotelId = params.get("hotelId");
+		String pName = params.get("name");
+		String pNum = params.get("num");
+		String pPrice = params.get("price");
+		
+		boolean result = false;
+		
+		try {
+			HotelType hotelType = new HotelType();
+			hotelType.hotel = Hotel.findById(Long.valueOf(pHotelId));
+			hotelType.name = pName;
+			hotelType.num = Integer.parseInt(pNum);
+			hotelType.price = Integer.parseInt(pPrice);
+			
+			hotelType = hotelType.save();
+			if(hotelType.id != null){
 				result = true;
 			}
 		} catch (Exception e) {

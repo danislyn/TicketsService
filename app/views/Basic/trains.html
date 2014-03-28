@@ -13,7 +13,7 @@
 <div class="row-fluid">
     <div class="span4">
         <span>出发日期</span>
-        <div class="input-append date" id="leaveDate" data-date="" data-date-format="yyyy-mm-dd" data-link-field="leaveDateInput" data-link-format="yyyy-mm-dd">
+        <div class="input-append date" id="leaveDate" data-date="${pDate}" data-date-format="yyyy-mm-dd" data-link-field="leaveDateInput" data-link-format="yyyy-mm-dd">
             <input size="16" type="text" value="${pDate}" />
             <span class="add-on"><i class="icon-remove"></i></span>
             <span class="add-on"><i class="icon-th"></i></span>
@@ -110,6 +110,11 @@ $(function(){
         var date = $('#leaveDateInput').val();
         var trainId = $(this).closest('tr').attr('data-tid');
         var updateTd = $(this).closest('td').prev();
+
+        if(date.length == 0){
+            alert('请选择出发日期！');
+            return false;
+        }
 
         $.post(
             '/basic/trainBuy',

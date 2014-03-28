@@ -1,0 +1,136 @@
+#{extends 'main.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+#hotelsTable{
+    margin: 20px 0px;
+}
+#hotelsTable input[type="radio"]{
+    margin-bottom: 4px;
+    margin-right: 4px;
+}
+</style>
+#{/set}
+
+
+
+<h2>酒店预定</h2>
+<div class="row-fluid">
+    <div class="span4">
+        <span>入住日期</span>
+        <div class="input-append date" id="leaveDate" data-date="${pDate}" data-date-format="yyyy-mm-dd" data-link-field="leaveDateInput" data-link-format="yyyy-mm-dd">
+            <input size="16" type="text" value="${pDate}" />
+            <span class="add-on"><i class="icon-remove"></i></span>
+            <span class="add-on"><i class="icon-th"></i></span>
+        </div>
+        <input type="hidden" id="leaveDateInput" value="${pDate}" />
+    </div>
+
+    <div class="span4">
+        <span>选择城市</span>
+        <select id="citySelect">
+            <option value="-1">请选择</option>
+            %{ for(city in cities){ }%
+            <option value="${city.id}" %{if(city.id==pCity){}%selected="selected"%{}}%>${city.name}</option>
+            %{ } }%
+        </select>
+    </div>
+
+    <div class="span1">
+        <a href="javascript:void(0);" class="btn btn-primary btn-small" id="queryLink">查询酒店</a>
+    </div>
+</div>
+
+<table class="table table-striped table-bordered table-hover" id="hotelsTable">
+    <thead>
+        <tr role="row">
+            <th>酒店</th>
+            <th>城市</th>
+            <th>酒店简介</th>
+            <th>房型信息</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(hotel in hotels){ }%
+        <tr data-hid="${hotel.id}">
+            <td>${hotel.name}</td>
+            <td>${hotel.city.name}</td>
+            <td>${hotel.info}</td>
+            <td>
+                %{ for(type in hotel.hotelTypes){ }%
+                <label>
+                    <input type="radio" name="typeRadio${hotel.id}" value="${type.id}">
+                    ${type.name}<span>&nbsp;&nbsp;(&nbsp;剩${type.available}间&nbsp;)</span>
+                    <span>&nbsp;&nbsp;¥</span>${type.price}<span>/间</span>
+                </label>
+                %{ } }%
+            </td>
+            <td><a href="javascript:void(0);" class="buy-link">预定</a></td>
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+    
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#leaveDate').datetimepicker({
+        language:  'zh-CN',
+        weekStart: 0,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 2,
+        minView: 2,
+        forceParse: 0
+    });
+
+
+    $('#queryLink').click(function(){
+        var date = $('#leaveDateInput').val();
+        var city = $('#citySelect').val();
+        //refresh
+        window.location.href = '/basic/hotelQuery?date=' + date + '&city=' + city;
+    });
+
+
+    $('.buy-link').click(function(){
+        var date = $('#leaveDateInput').val();
+        var hotelId = $(this).closest('tr').attr('data-hid');
+        var typeId = $('input[name="typeRadio' + hotelId + '"]:checked').val();
+
+        if(date.length == 0){
+            alert('请选择入住日期！');
+            return false;
+        }
+        if(typeof typeId === 'undefined'){
+            alert('请选择房型！');
+            return false;
+        }
+
+        $.post(
+            '/basic/hotelBuy',
+            {
+                'date': date,
+                'typeId': typeId
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('预定成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('预定失败');
+                }
+            }
+        );
+    });
+
+});
+</script>
+#{/set}
