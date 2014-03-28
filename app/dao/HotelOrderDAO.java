@@ -18,6 +18,10 @@ public class HotelOrderDAO {
 		return HotelOrder.findAll();
 	}
 	
+	public static List<HotelOrder> findByAccount(Long accountId){
+		return HotelOrder.find("byCreateAccountId", accountId.intValue()).fetch();
+	}
+	
 	public static int getOrderCountByHotelAndDate(Long hotelTypeId, String checkinDate){
 		String sql = "select count(*) from hotel_order where hotel_type_id=" + hotelTypeId + " and checkin_date='" + checkinDate + "' and status<>-1";
 		Query query = Model.em().createNativeQuery(sql);

@@ -6,6 +6,8 @@ import java.util.List;
 import models.Hotel;
 import models.HotelOrder;
 import models.Role;
+import models.Spot;
+import models.SpotOrder;
 import models.TrainOrder;
 import models.TrainSchedule;
 
@@ -13,6 +15,8 @@ import dao.CityDAO;
 import dao.HotelDAO;
 import dao.HotelOrderDAO;
 import dao.RoleDAO;
+import dao.SpotDAO;
+import dao.SpotOrderDAO;
 import dao.TrainOrderDAO;
 import dao.TrainScheduleDAO;
 import play.mvc.Controller;
@@ -174,14 +178,79 @@ public class BasicController extends Controller {
 	
 	
 	//=================================================================
+	//查景点
+	public static void spotQuery(){
+		//获取查询条件
+		String pCity = params.get("city");
+		
+		List<Spot> spots = new ArrayList<Spot>();
+		
+		if(pCity != null){
+			spots = SpotDAO.query(Long.valueOf(pCity));
+		}
+		
+		//NOTE
+		if(pCity == null || pCity.equals("-1")){
+			spots = SpotDAO.findAll();
+		}
+		
+		renderArgs.put("spots", spots);
+		renderArgs.put("cities", CityDAO.findAll());
+		renderArgs.put("pCity", pCity == null ? pCity : Integer.parseInt(pCity));
+		
+		render("Basic/spots.html");
+	}
+	
+	
+	//景点门票购买
+	public static void spotBuy(){
+		String pSpotId = params.get("spotId");
+		String pNum = params.get("num");
+		
+		boolean result = false;
+
+		if(pSpotId != null){
+			Long accountId = Long.valueOf(session.get("account_id"));
+			result = SpotOrderDAO.makeOrder(Long.valueOf(pSpotId), Integer.parseInt(pNum), accountId);
+		}
+		
+		response.contentType = "text/html;charset=UTF-8";
+    	if(result){
+    		renderJSON("{success:true}");
+    	}
+    	else{
+    		renderJSON("{success:false}");
+    	}
+	}
+	
+	
+	//景点退票
+	public static void spotAbortOrder(){
+		String pOrderId = params.get("orderId");
+		boolean result = SpotOrderDAO.abortOrder(Long.valueOf(pOrderId));
+		
+		response.contentType = "text/html;charset=UTF-8";
+    	if(result){
+    		renderJSON("{success:true}");
+    	}
+    	else{
+    		renderJSON("{success:false}");
+    	}
+	}
+	
+	
+	//=================================================================
 	//我的订单，车票订单、酒店订单、景点订单
 	public static void myOrders(){
+		Long accountId = Long.valueOf(session.get("account_id"));
 		
-		List<TrainOrder> trainOrders = TrainOrderDAO.findAll();
-		List<HotelOrder> hotelOrders = HotelOrderDAO.findAll();
+		List<TrainOrder> trainOrders = TrainOrderDAO.findByAccount(accountId);
+		List<HotelOrder> hotelOrders = HotelOrderDAO.findByAccount(accountId);
+		List<SpotOrder> spotOrders = SpotOrderDAO.findByAccount(accountId);
 		
 		renderArgs.put("trainOrders", trainOrders);
 		renderArgs.put("hotelOrders", hotelOrders);
+		renderArgs.put("spotOrders", spotOrders);
 		
 		render("Basic/orders.html");
 	}

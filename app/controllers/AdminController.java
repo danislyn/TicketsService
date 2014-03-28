@@ -4,11 +4,13 @@ import java.util.List;
 
 import dao.CityDAO;
 import dao.HotelDAO;
+import dao.SpotDAO;
 import dao.TrainScheduleDAO;
 
 import models.City;
 import models.Hotel;
 import models.HotelType;
+import models.Spot;
 import models.TrainSchedule;
 
 import play.mvc.Controller;
@@ -129,6 +131,49 @@ public class AdminController extends Controller {
 			
 			hotelType = hotelType.save();
 			if(hotelType.id != null){
+				result = true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		response.contentType = "text/html;charset=UTF-8";
+    	if(result){
+    		renderJSON("{success:true}");
+    	}
+    	else{
+    		renderJSON("{success:false}");
+    	}
+	}
+	
+	
+	//============================================================
+	public static void spotQuery(){
+		List<Spot> spots = SpotDAO.findAll();
+		renderArgs.put("spots", spots);
+		renderArgs.put("cities", CityDAO.findAll());
+		render("Admin/spots.html");
+	}
+	
+	
+	//添加景点
+	public static void spotAdd(){
+		String pName = params.get("name");
+		String pCity = params.get("city");
+		String pInfo = params.get("info");
+		String pPrice = params.get("price");
+		
+		boolean result = false;
+		
+		try {
+			Spot spot = new Spot();
+			spot.name = pName;
+			spot.city = City.findById(Long.valueOf(pCity));
+			spot.info = pInfo;
+			spot.price = Integer.parseInt(pPrice);
+			
+			spot = spot.save();
+			if(spot.id != null){
 				result = true;
 			}
 		} catch (Exception e) {

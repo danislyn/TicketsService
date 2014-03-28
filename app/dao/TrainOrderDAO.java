@@ -18,6 +18,10 @@ public class TrainOrderDAO {
 		return TrainOrder.findAll();
 	}
 	
+	public static List<TrainOrder> findByAccount(Long accountId){
+		return TrainOrder.find("byCreateAccountId", accountId.intValue()).fetch();
+	}
+	
 	public static int getOrderCountByTrainAndDate(Long trainId, String leaveDate){
 		String sql = "select count(*) from train_order where train_id=" + trainId + " and leave_date='" + leaveDate + "' and status<>-1";
 		Query query = Model.em().createNativeQuery(sql);

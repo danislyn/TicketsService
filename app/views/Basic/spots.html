@@ -1,0 +1,98 @@
+#{extends 'main.html' /}
+#{set 'moreStyles'}
+<style type="text/css">
+#spotsTable{
+    margin: 20px 0px;
+}
+#spotsTable .num-input{
+    margin-bottom: 0px;
+    margin-right: 4px;
+    width: 30px;
+}
+</style>
+#{/set}
+
+
+
+<h2>景点门票预定</h2>
+<div class="row-fluid">
+    <div class="span4">
+        <span>选择城市</span>
+        <select id="citySelect">
+            <option value="-1">请选择</option>
+            %{ for(city in cities){ }%
+            <option value="${city.id}" %{if(city.id==pCity){}%selected="selected"%{}}%>${city.name}</option>
+            %{ } }%
+        </select>
+    </div>
+
+    <div class="span1">
+        <a href="javascript:void(0);" class="btn btn-primary btn-small" id="queryLink">查询景点</a>
+    </div>
+</div>
+
+<table class="table table-striped table-bordered table-hover" id="spotsTable">
+    <thead>
+        <tr role="row">
+            <th>景点</th>
+            <th>城市</th>
+            <th>景点简介</th>
+            <th>票价</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        %{ for(spot in spots){ }%
+        <tr data-sid="${spot.id}">
+            <td>${spot.name}</td>
+            <td>${spot.city.name}</td>
+            <td>${spot.info}</td>
+            <td><span>¥</span>${spot.price}</td>
+            <td>
+                <input type="text" class="num-input" value="1"><span>张</span>
+                <a href="javascript:void(0);" class="buy-link">购买</a>
+            </td>
+        </tr>
+        %{ } }%
+    </tbody>
+</table>
+    
+
+
+
+#{set 'moreScripts'}
+<script type="text/javascript">
+$(function(){
+
+    $('#queryLink').click(function(){
+        var city = $('#citySelect').val();
+        //refresh
+        window.location.href = '/basic/spotQuery?city=' + city;
+    });
+
+    $('.buy-link').click(function(){
+        var spotId = $(this).closest('tr').attr('data-sid');
+        var num = $(this).closest('td').find('.num-input').val();
+        
+        $.post(
+            '/basic/spotBuy',
+            {
+                'spotId': spotId,
+                'num': num
+            },
+            function(data){
+                var result = eval('(' + data + ')');
+                if(result.success == true){
+                    alert('购买成功');
+                    window.location.reload();
+                }
+                else{
+                    alert('购买失败');
+                }
+            }
+        );
+    });
+
+});
+</script>
+#{/set}
